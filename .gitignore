@@ -87,3 +87,10 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+# cnn stories
+cnn_stories/
+output/
+selected_stories/
+*.tgz
+test.out.txt

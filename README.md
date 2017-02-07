@@ -1,2 +1,6 @@
 # cnn_miner
-cs6001 cnn article datamining
+cs6001 
+
+## CNN Article Datamining
+
+CNN article content comparison using naive metrics.
