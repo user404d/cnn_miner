@@ -35,8 +35,10 @@ class Parser:
 
     @staticmethod
     def tokenize(story):
+        """
+        Tokenize a CNN story, returning lower case tokens
+        to aid in comparisons.
+        """
         tokens = Parser._filter.sub('', story)
         tokens = Parser._tokenizer.findall(tokens)
         return [token.lower() for token in tokens]
-
-

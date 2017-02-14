@@ -18,23 +18,33 @@ class Measure(Enum):
     JACCARD = 3
 
     @staticmethod
-    def euclidean(matrix, row):
+    def euclidean(row, matrix):
+        """
+        Euclidean distance for vector in population.
+        """
         euclidean = matrix - row
         euclidean = np.square(euclidean)
-        return np.sqrt(euclidean.sum(axis=1))
+        ones = np.ones((matrix.shape[0],1), dtype=np.float64)
+        return  ones / (ones + np.sqrt(np.sum(euclidean, axis=1)))
 
     @staticmethod
     def cosine(row, matrix):
+        """
+        Cosine similarity for vector in population.
+        """
         dot_products = matrix * row.T
         measure = np.square(matrix).sum(axis=1) * np.square(row).sum(axis=1)
-        return np.ones((matrix.shape[0],1)) - np.divide(dot_products, measure)
+        return np.divide(dot_products, measure)
 
     @staticmethod
     def jaccard(row, matrix):
+        """
+        Jaccard similarity generalized to arbitrary magnitudes
+        for vector in population.
+        """
         jaccard_min_sums = np.minimum(matrix, row).sum(axis=1)
         jaccard_max_sums = np.maximum(matrix, row).sum(axis=1)
-        jaccard_similarity = np.divide(jaccard_min_sums, jaccard_max_sums)
-        return np.ones((matrix.shape[0],1)) - jaccard_similarity
+        return np.divide(jaccard_min_sums, jaccard_max_sums)
 
 
 class VectorSpace(Enum):
@@ -44,16 +54,25 @@ class VectorSpace(Enum):
     
     @staticmethod
     def existence(feature, features):
+        """
+        Tests if the feature exists in the feature set
+        """
         return feature in features
 
     @staticmethod
     def frequency(feature, features):
+        """
+        Counts the occurrences of a feature in a feature set
+        """
         return features.count(feature)
 
 
 class Ranker:
     @staticmethod
     def pairwise_distances(matrix, method=Measure.EUCLIDEAN):
+        """
+        Computes the pairwise distance between each vector
+        """
         size = range(matrix.shape[0])
         out = None
         if method == Measure.EUCLIDEAN:
@@ -66,9 +85,15 @@ class Ranker:
 
     @staticmethod
     def rank(matrix):
+        """
+        Ranks the vectors based on the pairwise distances.
+
+        Only takes values from the upper half of the triangular matrix as
+        the values are duplicated in the lower half.
+        """
         pairs = zip(*np.triu_indices(matrix.shape[0],1))
         all_pairs_distance = [(i, matrix[i]) for i in pairs]
-        return sorted(all_pairs_distance, key=itemgetter(1))
+        return sorted(all_pairs_distance, key=itemgetter(1), reverse=True)
 
 
 class Model:
@@ -82,10 +107,8 @@ class Model:
                  type_vector_space=VectorSpace.BOOLEAN):
         """
         Args:
-          type of vector space (existence, frequency, normalized frequency)
-          labeled vector in feature vector space
-          labels
-          features
+          tokenized_articles :: list of articles that have had content tokenized
+          type_vector_space :: (existence, frequency, normalized frequency)
         """
         if len(tokenized_articles) == 0:
             raise ValueError("No tokenized articles provided.\n\n{}"
@@ -120,7 +143,11 @@ class Model:
         
 
     def __str__(self):
-        disp_labels = "\n".join(self.labels)
+        """
+        String representation of the class
+        (Note: will truncate features list if too large)
+        """
+        disp_labels = "\n".join("{},{}".format(label,i) for i,label in enumerate(self.labels))
         disp_features = ""
         if len(self.features) > 50:
             disp_features = "\n".join(self.features[:25] + [".\n.\n."]

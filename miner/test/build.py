@@ -31,6 +31,9 @@ if __name__ == "__main__":
             stories[path] = [word.lower() for word in p.tokenize(cnn_story.read())]
 
     existence = m(stories, v.BOOLEAN)
+    print(mz.euclidean(existence.matrix[0,], existence.matrix))
+"""
+    existence = m(stories, v.BOOLEAN)
     print(existence)
     print(mz.euclidean(existence.matrix[0,], existence.matrix))
     print(mz.cosine(existence.matrix[0,], existence.matrix))
@@ -50,4 +53,4 @@ if __name__ == "__main__":
     print(mz.cosine(normalized.matrix[0,], normalized.matrix))
     print(mz.jaccard(normalized.matrix[0,], normalized.matrix))
     print(r.pairwise_distances(normalized.matrix, mz.JACCARD))
-
+"""
