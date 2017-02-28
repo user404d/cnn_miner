@@ -7,6 +7,8 @@
 #TODO: Break into components and separate into different files
 
 import numpy as np
+from sklearn.neighbors import KNeighborsClassifier as KNN
+from sklearn.tree import DecisionTreeClassifier as DTC
 from enum import Enum
 from itertools import chain
 from operator import itemgetter
@@ -95,6 +97,18 @@ class Ranker:
         all_pairs_distance = [(i, matrix[i]) for i in pairs]
         return sorted(all_pairs_distance, key=itemgetter(1), reverse=True)
 
+    @staticmethod
+    def split_distances(test, train, method=Measure.JACCARD):
+        size = range(test.shape[0])
+        out = None
+        if method == Measure.EUCLIDEAN:
+            out = [Measure.euclidean(test[i,], train) for i in size]
+        elif method == Measure.COSINE:
+            out = [Measure.cosine(test[i,], train) for i in size]
+        else:
+            out = [Measure.jaccard(test[i,], train) for i in size]
+        return np.concatenate(out, axis=1).T
+
 
 class Model:
     """
@@ -147,7 +161,7 @@ class Model:
         String representation of the class
         (Note: will truncate features list if too large)
         """
-        disp_labels = "\n".join("{},{}".format(label,i) for i,label in enumerate(self.labels))
+        disp_labels = "\n".join("{},{}".format(i,label) for i,label in enumerate(self.labels))
         disp_features = ""
         if len(self.features) > 50:
             disp_features = "\n".join(self.features[:25] + [".\n.\n."]

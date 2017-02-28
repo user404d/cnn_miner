@@ -9,12 +9,12 @@ def feature_freqs(pair, model):
     second = model.matrix[pair[1],]
     return [(feature, first[0,i], second[0,i]) for i,feature in enumerate(model.features)]
 
-def main():
-    with open("cnn_stories_listing.txt") as paths:
+def rankings():
+    with open("meta/cnn_stories_listing.txt") as paths:
         stories = {}
         for path in paths:
             with open(path.strip()) as story:
-                stories[path] = Parser.tokenize(story.read())
+                stories[path.strip()] = Parser.tokenize(story.read())
 
     types = {
         "existence": Model(stories, VectorSpace.BOOLEAN),
@@ -48,4 +48,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    rankings()
