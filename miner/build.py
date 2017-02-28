@@ -7,11 +7,8 @@
 #TODO: Break into components and separate into different files
 
 import numpy as np
-from sklearn.neighbors import KNeighborsClassifier as KNN
-from sklearn.tree import DecisionTreeClassifier as DTC
 from enum import Enum
 from itertools import chain
-from functools import reduce
 from operator import itemgetter
 
 
