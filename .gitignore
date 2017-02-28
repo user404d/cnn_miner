@@ -94,4 +94,4 @@ output/
 selected_stories/
 *.tgz
 test.out.txt
-*.DS_Store
+cnn_env/
