@@ -11,6 +11,7 @@ from sklearn.neighbors import KNeighborsClassifier as KNN
 from sklearn.tree import DecisionTreeClassifier as DTC
 from enum import Enum
 from itertools import chain
+from functools import reduce
 from operator import itemgetter
 
 
@@ -132,8 +133,18 @@ class Model:
 
         self._type = type_vector_space
         self.labels = list(sorted(tokenized_articles.keys()))
-        self.features = set(chain.from_iterable(tokenized_articles.values()))
-        self.features = list(sorted(self.features))
+        all_features = chain.from_iterable(tokenized_articles.values())
+        features = {}
+        for feature in all_features:
+            features[feature] = features.get(feature, 0) + 1
+        self.features = []
+        for feature, count in features.items():
+            isolated = 0
+            for label in self.labels:
+                if feature in tokenized_articles[label]: isolated += 1
+            if isolated < len(self.labels) and isolated > 1 and count > 1:
+                self.features.append(feature)
+        self.features.sort()
         #TODO: make conversion function to change between representations
         self.matrix = []
 
