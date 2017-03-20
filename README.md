@@ -7,14 +7,16 @@ CNN article content comparison using naive metrics.
 
 ## Generating Rankings for Article Similarities
 
-Python3.5 is a requirement for this project and should be available via `python3.5`.
+Python >= 3.5 is a requirement for this project and should be available via `python`.
 
 Run the following commmand after cloning the repository:
 
 ```bash
 make install
 # then
-make run_classify # <-- Assignment 2
+make run_cluster # <-- Assignment 3
+# -- OR --
+make run_classify
 # -- OR --
 make run_ranking
 ```
