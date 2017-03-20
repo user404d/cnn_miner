@@ -1,10 +1,11 @@
+
 """
 ##
 #  Build model
 ##
 """
 
-#TODO: Break into components and separate into different files
+# TODO: Break into components and separate into different files
 
 import numpy as np
 from enum import Enum
@@ -24,17 +25,17 @@ class Measure(Enum):
         """
         euclidean = matrix - row
         euclidean = np.square(euclidean)
-        ones = np.ones((matrix.shape[0],1), dtype=np.float64)
-        return  ones / (ones + np.sqrt(np.sum(euclidean, axis=1)))
+        ones = np.ones((1, matrix.shape[0]), dtype=np.float64)
+        return np.divide(ones, (ones + np.sqrt(np.sum(euclidean, axis=1)).T))
 
     @staticmethod
     def cosine(row, matrix):
         """
         Cosine similarity for vector in population.
         """
-        dot_products = matrix * row.T
+        dot_products = matrix.dot(row.T)
         measure = np.square(matrix).sum(axis=1) * np.square(row).sum(axis=1)
-        return np.divide(dot_products, measure)
+        return np.divide(dot_products, measure).reshape(1, -1)
 
     @staticmethod
     def jaccard(row, matrix):
@@ -44,14 +45,14 @@ class Measure(Enum):
         """
         jaccard_min_sums = np.minimum(matrix, row).sum(axis=1)
         jaccard_max_sums = np.maximum(matrix, row).sum(axis=1)
-        return np.divide(jaccard_min_sums, jaccard_max_sums)
+        return np.divide(jaccard_min_sums, jaccard_max_sums).reshape(1, -1)
 
 
 class VectorSpace(Enum):
     BOOLEAN = 1
     FREQUENCY = 2
     NORMALIZED = 3
-    
+
     @staticmethod
     def existence(feature, features):
         """
@@ -76,12 +77,12 @@ class Ranker:
         size = range(matrix.shape[0])
         out = None
         if method == Measure.EUCLIDEAN:
-            out = [Measure.euclidean(matrix[i,], matrix) for i in size]
+            out = [Measure.euclidean(matrix[i, ], matrix) for i in size]
         elif method == Measure.COSINE:
-            out = [Measure.cosine(matrix[i,], matrix) for i in size]
+            out = [Measure.cosine(matrix[i, ], matrix) for i in size]
         else:
-            out = [Measure.jaccard(matrix[i,], matrix) for i in size]
-        return np.triu(np.concatenate(out, axis=1), k=0)
+            out = [Measure.jaccard(matrix[i, ], matrix) for i in size]
+        return np.triu(np.vstack(out), k=0)
 
     @staticmethod
     def rank(matrix):
@@ -91,7 +92,7 @@ class Ranker:
         Only takes values from the upper half of the triangular matrix as
         the values are duplicated in the lower half.
         """
-        pairs = zip(*np.triu_indices(matrix.shape[0],1))
+        pairs = zip(*np.triu_indices(matrix.shape[0], 1))
         all_pairs_distance = [(i, matrix[i]) for i in pairs]
         return sorted(all_pairs_distance, key=itemgetter(1), reverse=True)
 
@@ -100,12 +101,12 @@ class Ranker:
         size = range(test.shape[0])
         out = None
         if method == Measure.EUCLIDEAN:
-            out = [Measure.euclidean(test[i,], train) for i in size]
+            out = [Measure.euclidean(test[i, ], train) for i in size]
         elif method == Measure.COSINE:
-            out = [Measure.cosine(test[i,], train) for i in size]
+            out = [Measure.cosine(test[i, ], train) for i in size]
         else:
-            out = [Measure.jaccard(test[i,], train) for i in size]
-        return np.concatenate(out, axis=1).T
+            out = [Measure.jaccard(test[i, ], train) for i in size]
+        return np.vstack(out)
 
 
 class Model:
@@ -114,8 +115,8 @@ class Model:
     (matrix: records x features)
     """
 
-    def __init__(self, 
-                 tokenized_articles, 
+    def __init__(self,
+                 tokenized_articles,
                  type_vector_space=VectorSpace.BOOLEAN):
         """
         Args:
@@ -126,7 +127,8 @@ class Model:
             raise ValueError("No tokenized articles provided.\n\n{}"
                              .format(tokenized_articles))
         elif not type_vector_space in VectorSpace:
-            raise ValueError("Not VectorSpace.\n\n{}".format(type_vector_space))
+            raise ValueError(
+                "Not VectorSpace.\n\n{}".format(type_vector_space))
 
         self._type = type_vector_space
         self.labels = list(sorted(tokenized_articles.keys()))
@@ -138,11 +140,12 @@ class Model:
         for feature, count in features.items():
             isolated = 0
             for label in self.labels:
-                if feature in tokenized_articles[label]: isolated += 1
+                if feature in tokenized_articles[label]:
+                    isolated += 1
             if isolated < len(self.labels) and isolated > 1 and count > 1:
                 self.features.append(feature)
         self.features.sort()
-        #TODO: make conversion function to change between representations
+        # TODO: make conversion function to change between representations
         self.matrix = []
 
         for label in self.labels:
@@ -159,28 +162,29 @@ class Model:
             self.matrix = np.asmatrix(self.matrix, np.float64)
         elif self._type == VectorSpace.FREQUENCY:
             self.matrix = np.asmatrix(self.matrix, np.float64)
+            self.matrix /= np.sum(self.matrix, axis=1).reshape(-1, 1)
         else:
             self.matrix = np.asmatrix(self.matrix, np.float64)
-            self.matrix /= np.max(self.matrix, axis=0)
-        
+            self.matrix /= np.sum(self.matrix, axis=1).reshape(-1, 1)
 
     def __str__(self):
         """
         String representation of the class
         (Note: will truncate features list if too large)
         """
-        disp_labels = "\n".join("{},{}".format(i,label) for i,label in enumerate(self.labels))
+        disp_labels = "\n".join("{},{}".format(i, label)
+                                for i, label in enumerate(self.labels))
         disp_features = ""
         if len(self.features) > 50:
             disp_features = "\n".join(self.features[:25] + [".\n.\n."]
                                       + self.features[-25:])
         else:
             disp_features = "\n".join(self.features)
-        return ("\n{0}\nType: {2}\n{1}" \
-                "\nLabels: {3}\n\n{4}" \
-                "\n\n{1}\nFeatures: {5}\n\n{6}" \
-                "\n\n{1}\nMatrix: {7}\n\n{8}" \
-                "\n\n{1}\n{0}").format("***********************************", 
+        return ("\n{0}\nType: {2}\n{1}"
+                "\nLabels: {3}\n\n{4}"
+                "\n\n{1}\nFeatures: {5}\n\n{6}"
+                "\n\n{1}\nMatrix: {7}\n\n{8}"
+                "\n\n{1}\n{0}").format("***********************************",
                                        "----------------", self._type,
                                        len(self.labels), disp_labels,
                                        len(self.features), disp_features,
